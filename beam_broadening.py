@@ -45,7 +45,9 @@ def np_access(element_, idx_):
     return DCS_data[element_].to_numpy()[:, idx_]
 
 
-cum_weights = {element: list(itertools.accumulate(np.sin(np.radians(np_access(element, 0))) * np_access(element, 1)))
+cum_weights = {element: np.cumsum(  np.sin(np.radians(np_access(element, 0)[1:]))
+                                  * np_access(element, 1)[1:]
+                                  * np.diff(np_access(element, 0))).tolist()
                for element in elements}
 
 
@@ -54,7 +56,8 @@ def make_ray(mylist, start, dir, energy):
     end = start + dir * depth
     if 0 < end[2] < thickness:
         scattered_at = random.choices(elements, weights=[prob_scatter[element] for element in elements])[0]
-        angle_todo = np.radians(random.choices(np_access(scattered_at, 0), cum_weights=cum_weights[scattered_at])[0])
+        angle_todo = np.radians(random.choices(np_access(scattered_at, 0)[1:],
+                                               cum_weights=cum_weights[scattered_at])[0])
         # create vector orthogonal to dir
         ortho = np.cross(dir, [1, 0, 0])
         assert(np.linalg.norm(ortho) > 0)
@@ -83,5 +86,6 @@ plt.xlim([-4, 4])
 plt.xlabel('nm')
 plt.ylabel('nm')
 plt.gca().invert_yaxis()
+plt.legend(['n=160'])
 plt.savefig('test'+str(random.random())+'.pdf')
 plt.show()
